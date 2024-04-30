@@ -18,6 +18,7 @@ const (
 
 func main() {
 	//gin服务
+
 	connection, err := sql.Open(DBDriver, DBSource)
 	fmt.Println(DBDriver, DBSource)
 	if err != nil {

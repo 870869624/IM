@@ -12,7 +12,7 @@ CREATE TABLE "users" (
   "created_at" timestamptz NOT NULL DEFAULT (now())
 );
 
-CREATE TABLE "friend" (
+CREATE TABLE "friends" (
   "id" bigserial PRIMARY KEY,
   "f_user_id" varchar NOT NULL,
   "t_user_id" varchar NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE "groups" (
   "created_at" timestamptz NOT NULL DEFAULT (now())
 );
 
-CREATE TABLE "group_member" (
+CREATE TABLE "group_members" (
   "id" bigserial PRIMARY KEY,
   "name" varchar NOT NULL,
   "group_id" varchar NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE "messages" (
   "created_at" timestamptz NOT NULL DEFAULT (now())
 );
 
-CREATE TABLE "apply" (
+CREATE TABLE "applies" (
   "id" bigserial PRIMARY KEY,
   "applicate_id" varchar NOT NULL,
   "target_id" varchar NOT NULL,
@@ -57,9 +57,9 @@ CREATE INDEX ON "groups" ("name");
 
 CREATE INDEX ON "groups" ("account");
 
-CREATE INDEX ON "group_member" ("group_id");
+CREATE INDEX ON "group_members" ("group_id");
 
-CREATE INDEX ON "group_member" ("user_id");
+CREATE INDEX ON "group_members" ("user_id");
 
 CREATE INDEX ON "messages" ("content");
 
@@ -67,17 +67,17 @@ COMMENT ON COLUMN "messages"."m_type" IS '消息类型,0为群消息,1为私人�
 
 COMMENT ON COLUMN "messages"."networktatus" IS '0为在线,1为离线';
 
-COMMENT ON COLUMN "apply"."a_type" IS '消息类型,0为群申请,1为私人申请';
+COMMENT ON COLUMN "applies"."a_type" IS '消息类型,0为群申请,1为私人申请';
 
-ALTER TABLE "friend" ADD FOREIGN KEY ("f_user_id") REFERENCES "users" ("account");
+ALTER TABLE "friends" ADD FOREIGN KEY ("f_user_id") REFERENCES "users" ("account");
 
-ALTER TABLE "friend" ADD FOREIGN KEY ("t_user_id") REFERENCES "users" ("account");
+ALTER TABLE "friends" ADD FOREIGN KEY ("t_user_id") REFERENCES "users" ("account");
 
 ALTER TABLE "groups" ADD FOREIGN KEY ("owner") REFERENCES "users" ("account");
 
-ALTER TABLE "group_member" ADD FOREIGN KEY ("group_id") REFERENCES "groups" ("account");
+ALTER TABLE "group_members" ADD FOREIGN KEY ("group_id") REFERENCES "groups" ("account");
 
-ALTER TABLE "group_member" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("account");
+ALTER TABLE "group_members" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("account");
 
 ALTER TABLE "messages" ADD FOREIGN KEY ("from_user_id") REFERENCES "users" ("account");
 
@@ -85,6 +85,6 @@ ALTER TABLE "messages" ADD FOREIGN KEY ("to_user_id") REFERENCES "users" ("accou
 
 ALTER TABLE "messages" ADD FOREIGN KEY ("group_id") REFERENCES "groups" ("account");
 
-ALTER TABLE "apply" ADD FOREIGN KEY ("applicate_id") REFERENCES "users" ("account");
+ALTER TABLE "applies" ADD FOREIGN KEY ("applicate_id") REFERENCES "users" ("account");
 
-ALTER TABLE "apply" ADD FOREIGN KEY ("target_id") REFERENCES "users" ("account");
+ALTER TABLE "applies" ADD FOREIGN KEY ("target_id") REFERENCES "users" ("account");

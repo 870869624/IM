@@ -6,12 +6,20 @@ import (
 	"fmt"
 	"net"
 	"time"
+	"wechat/models"
 	"wechat/util"
 )
+
+//连接成功以后把用户网络状态信息存入redis中
+// 用户在线状态信息
+// type onlineMap struct{
+// 	user db.User
+// }
 
 type Messages struct {
 	Message string `json:"message"`
 	Apply   string `json:"apply"`
+	System  string `json:"system"`
 }
 type MessageType struct {
 	From_account_id string   `json:"from_account_id"`
@@ -19,11 +27,13 @@ type MessageType struct {
 	Group_id        string   `json:"group_id"`
 	Token           string   `json:"token"`
 	Type            Messages //1.个人消息 2.群消息 3.系统消息 申请消息：群申请，个人申请
+	Content         string   `json:"content"`
 }
 
 // 获取输入信息，对比tokenString然后获取数据库用户信息，存入onlineMapz中
 func Process(conn net.Conn, server *Server) {
 	defer conn.Close()
+
 	var messageReq MessageType
 	for {
 		data := make([]byte, 1024)
@@ -47,14 +57,18 @@ func Process(conn net.Conn, server *Server) {
 			conn.Close()
 			return
 		}
-		//token错误也会被中断
-		user, err := server.store.GetUser(context.Background(), claims.Account)
+		//token错误也会被中断，获取到用户的信息
+		user, err := server.store.GetUser(context.Background(), claims.Account) //获取到了用户信息和消息信息
 		if err != nil {
 			conn.Write([]byte(string(err.Error())))
 			conn.Close()
 			return
 		}
-		fmt.Println(claims, user)
+
+		//在线状态存储进redis
+		models.UserMannager(user)
+
+		//获取消息结构体中的发送目标
 	}
 
 }

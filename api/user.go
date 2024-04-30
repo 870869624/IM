@@ -10,8 +10,8 @@ import (
 )
 
 type GetUserRequest struct {
-	Account        string `json:"account" binding:"required"`
-	HashedPassword string `json:"hashed_password" binding:"required"`
+	Account  string `json:"account" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
 
 // 用户注册接口
@@ -22,12 +22,8 @@ func (server *Server) CreateUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, util.ErrResponse(err))
 		return
 	}
-	HashPassword, err := util.HashPassword(userReq.HashedPassword)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, util.ErrResponse(err))
-		return
-	}
-
+	HashPassword := util.PSHA256(userReq.HashedPassword)
+	fmt.Println(HashPassword)
 	arg := db.CreateUserParams{
 		Username:       userReq.Username,
 		HashedPassword: HashPassword,
@@ -56,7 +52,7 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		return
 	}
 	//密码不对
-	err = util.CheckHashPassword(userRsp.HashedPassword, req.HashedPassword)
+	err = util.CheckPHashPassword(userRsp.HashedPassword, req.Password)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, util.ErrResponse(err))
 		return
