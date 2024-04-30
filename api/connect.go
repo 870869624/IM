@@ -10,11 +10,12 @@ import (
 	"wechat/util"
 )
 
-//连接成功以后把用户网络状态信息存入redis中
+// 连接成功以后把用户网络状态信息存入redis中
 // 用户在线状态信息
-// type onlineMap struct{
-// 	user db.User
-// }
+//
+//	type onlineMap struct{
+//		user db.User
+//	}
 
 type Messages struct {
 	Message string `json:"message"`
@@ -29,6 +30,9 @@ type MessageType struct {
 	Type            Messages //1.个人消息 2.群消息 3.系统消息 申请消息：群申请，个人申请
 	Content         string   `json:"content"`
 }
+
+// 用户在线状态信息，key为account， val为连接
+var OnlineMap map[string]net.Conn
 
 // 获取输入信息，对比tokenString然后获取数据库用户信息，存入onlineMapz中
 func Process(conn net.Conn, server *Server) {

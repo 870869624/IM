@@ -3,15 +3,19 @@ package models
 import (
 	"context"
 	"time"
-	"wechat/db"
-	"wechat/models"
+	"wechat/db/redis"
+	db "wechat/db/sqlc"
 )
 
-func UserMannager(user models.User) error {
-	rdb := db.ConnectRdb()
-	err := rdb.Set(context.Background(), user.Account, user, time.Duration(0))
+func UserMannager(user db.User) string {
+	rdb := redis.ConnectRdb()
+	_, err := rdb.Set(context.Background(), user.Account, user, time.Duration(0)).Result()
 	if err != nil {
-		return err.Err()
+		return err.Error()
 	}
-	return nil
+	return ""
+}
+
+func GetUser() (db.User, error) {
+
 }
