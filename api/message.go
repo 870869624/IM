@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (server *Server) Createmessage(ctx *gin.Context) {
+func (server *Server) Createmeeessage(ctx *gin.Context) {
 
 	var Req db.CreateMessageParams
 	if err := ctx.ShouldBindJSON(&Req); err != nil {

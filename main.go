@@ -17,16 +17,16 @@ const (
 )
 
 func main() {
-	//gin服务
 
+	//gin服务
 	connection, err := sql.Open(DBDriver, DBSource)
 	fmt.Println(DBDriver, DBSource)
 	if err != nil {
 		log.Fatalln("无法连接", err)
 	}
 
-	store := db.NewStore(connection) //初始化
-	server, err := api.NewServer(store)
+	store := db.NewStore(connection)    //初始化,将数据库连接存入存储器
+	server, err := api.NewServer(store) //利用存储器新建网络服务
 	if err != nil {
 		log.Fatal("不能新建服务", err)
 	}

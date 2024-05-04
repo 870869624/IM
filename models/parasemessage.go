@@ -16,6 +16,15 @@ func UserMannager(user db.User) string {
 	return ""
 }
 
-func GetUser() (db.User, error) {
-
+func GetUser(acount string) (db.User, error) {
+	rdb := redis.ConnectRdb()
+	userMessage, err := rdb.Get(context.Background(), acount).Result()
+	if err != nil {
+		return db.User{}, nil
+	}
+	user, err := JsonUnmarshal(userMessage)
+	if err != nil {
+		return db.User{}, err
+	}
+	return user, nil
 }
