@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"wechat/util"
 
@@ -18,7 +17,6 @@ func ParaseToken() func(ctx *gin.Context) {
 			ctx.Abort()
 			return
 		}
-		fmt.Println(tokenString)
 
 		claims, err := util.ParaseToken(tokenString)
 		if err != nil {

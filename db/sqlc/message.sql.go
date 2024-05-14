@@ -7,62 +7,64 @@ package db
 
 import (
 	"context"
-	"database/sql"
 )
 
 const createMessage = `-- name: CreateMessage :one
 INSERT INTO messages (
-  content, from_user_id,to_user_id, group_id,m_type
+  content, from_user_account,to_user_account, group_account,m_type, networkstatus
 ) VALUES (
-  $1, $2,$3,$4,$5
+  $1, $2,$3,$4,$5, $6
 )
-RETURNING id, content, from_user_id, to_user_id, group_id, m_type, networktatus, created_at
+RETURNING id, content, from_user_account, to_user_account, group_account, m_type, networkstatus, created_at
 `
 
 type CreateMessageParams struct {
-	Content    sql.NullString `json:"content"`
-	FromUserID string         `json:"from_user_id"`
-	ToUserID   sql.NullString `json:"to_user_id"`
-	GroupID    sql.NullString `json:"group_id"`
-	MType      int32          `json:"m_type"`
+	Content         string `json:"content"`
+	FromUserAccount string `json:"from_user_account"`
+	ToUserAccount   string `json:"to_user_account"`
+	GroupAccount    string `json:"group_account"`
+	MType           int32  `json:"m_type"`
+	Networkstatus   int32  `json:"networkstatus"`
 }
 
 func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error) {
 	row := q.db.QueryRowContext(ctx, createMessage,
 		arg.Content,
-		arg.FromUserID,
-		arg.ToUserID,
-		arg.GroupID,
+		arg.FromUserAccount,
+		arg.ToUserAccount,
+		arg.GroupAccount,
 		arg.MType,
+		arg.Networkstatus,
 	)
 	var i Message
 	err := row.Scan(
 		&i.ID,
 		&i.Content,
-		&i.FromUserID,
-		&i.ToUserID,
-		&i.GroupID,
+		&i.FromUserAccount,
+		&i.ToUserAccount,
+		&i.GroupAccount,
 		&i.MType,
-		&i.Networktatus,
+		&i.Networkstatus,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const getMessageToGroup = `-- name: GetMessageToGroup :many
-SELECT content, from_user_id, group_id, m_type FROM messages
-WHERE group_id = $1
+SELECT content, from_user_account, group_account, m_type, networkstatus FROM messages
+WHERE group_account = $1
 `
 
 type GetMessageToGroupRow struct {
-	Content    sql.NullString `json:"content"`
-	FromUserID string         `json:"from_user_id"`
-	GroupID    sql.NullString `json:"group_id"`
-	MType      int32          `json:"m_type"`
+	Content         string `json:"content"`
+	FromUserAccount string `json:"from_user_account"`
+	GroupAccount    string `json:"group_account"`
+	MType           int32  `json:"m_type"`
+	Networkstatus   int32  `json:"networkstatus"`
 }
 
-func (q *Queries) GetMessageToGroup(ctx context.Context, groupID sql.NullString) ([]GetMessageToGroupRow, error) {
-	rows, err := q.db.QueryContext(ctx, getMessageToGroup, groupID)
+func (q *Queries) GetMessageToGroup(ctx context.Context, groupAccount string) ([]GetMessageToGroupRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMessageToGroup, groupAccount)
 	if err != nil {
 		return nil, err
 	}
@@ -72,9 +74,10 @@ func (q *Queries) GetMessageToGroup(ctx context.Context, groupID sql.NullString)
 		var i GetMessageToGroupRow
 		if err := rows.Scan(
 			&i.Content,
-			&i.FromUserID,
-			&i.GroupID,
+			&i.FromUserAccount,
+			&i.GroupAccount,
 			&i.MType,
+			&i.Networkstatus,
 		); err != nil {
 			return nil, err
 		}
@@ -90,19 +93,19 @@ func (q *Queries) GetMessageToGroup(ctx context.Context, groupID sql.NullString)
 }
 
 const getMessageToUser = `-- name: GetMessageToUser :many
-SELECT content, from_user_id, to_user_id, m_type FROM messages
-WHERE to_user_id = $1
+SELECT content, from_user_account, to_user_account, m_type FROM messages
+WHERE to_user_account = $1
 `
 
 type GetMessageToUserRow struct {
-	Content    sql.NullString `json:"content"`
-	FromUserID string         `json:"from_user_id"`
-	ToUserID   sql.NullString `json:"to_user_id"`
-	MType      int32          `json:"m_type"`
+	Content         string `json:"content"`
+	FromUserAccount string `json:"from_user_account"`
+	ToUserAccount   string `json:"to_user_account"`
+	MType           int32  `json:"m_type"`
 }
 
-func (q *Queries) GetMessageToUser(ctx context.Context, toUserID sql.NullString) ([]GetMessageToUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getMessageToUser, toUserID)
+func (q *Queries) GetMessageToUser(ctx context.Context, toUserAccount string) ([]GetMessageToUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMessageToUser, toUserAccount)
 	if err != nil {
 		return nil, err
 	}
@@ -112,8 +115,8 @@ func (q *Queries) GetMessageToUser(ctx context.Context, toUserID sql.NullString)
 		var i GetMessageToUserRow
 		if err := rows.Scan(
 			&i.Content,
-			&i.FromUserID,
-			&i.ToUserID,
+			&i.FromUserAccount,
+			&i.ToUserAccount,
 			&i.MType,
 		); err != nil {
 			return nil, err

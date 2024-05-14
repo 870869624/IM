@@ -18,12 +18,14 @@ services:
     ports:
       - 8080:8080
 
-  redis: # 服务名称
-    image: redis # 创建容器时所需的镜像
-    container_name: redis-6371 # 容器名称
-    network_mode: "host" # host 网络模式
-    volumes: # 数据卷，目录挂载
-      - ./6371/conf/redis.conf:/usr/local/etc/redis/redis.conf
-      - ./6371/data:/data
-    command: redis-server /usr/local/etc/redis/redis.conf # 覆盖容器启动后默认执行的命令
-    restart: always # 容器总是重新启动
+  redis:
+    image: redis:7.0.11-alpine
+    container_name: wechat_redis
+    privileged: true
+    volumes:
+      - ./.redis/data:/data
+      - ./.conf/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./.redis/logs:/logs
+    command: ["redis-server"]
+    ports:
+      - 6379:6379

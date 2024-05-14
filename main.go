@@ -7,6 +7,7 @@ import (
 	"net"
 	"wechat/api"
 	db "wechat/db/sqlc"
+	"wechat/tcp"
 
 	_ "github.com/lib/pq"
 )
@@ -17,7 +18,6 @@ const (
 )
 
 func main() {
-
 	//gin服务
 	connection, err := sql.Open(DBDriver, DBSource)
 	fmt.Println(DBDriver, DBSource)
@@ -39,14 +39,10 @@ func main() {
 		return
 	}
 
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			fmt.Println("启动出错")
-			return
-		}
-
-		go api.Process(conn, server)
+	server1, err := tcp.NewServer(store)
+	if err != nil {
+		log.Fatal("tcp服务未能建立", err)
 	}
+	tcp.AcceptListen(listener, server1)
 
 }

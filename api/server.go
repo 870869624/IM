@@ -29,6 +29,14 @@ func (server *Server) setunpRouter() {
 	{
 		userWithAuth.PATCH("/updata")
 		userWithAuth.DELETE("/logout")
+		userWithAuth.POST("/groupcreate", server.CreateGroup)
+		userWithAuth.POST("/apply", server.CreateApply)
+		userWithAuth.GET("/listreceivedapply/", server.ListReceivedApply)
+		userWithAuth.GET("/listsendapply/", server.ListSendApply)
+		userWithAuth.POST("/createfriend", server.CreateFriend)
+		userWithAuth.GET("/listfriend/", server.ListFriend)
+		userWithAuth.POST("/joingroup", server.JoinGroup)
+		userWithAuth.GET("/listgroupmember/", server.ListGroupMember)
 	}
 
 	server.router = router

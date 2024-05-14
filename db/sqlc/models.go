@@ -5,23 +5,26 @@
 package db
 
 import (
-	"database/sql"
 	"time"
 )
 
 type Apply struct {
-	ID          int64  `json:"id"`
-	ApplicateID string `json:"applicate_id"`
-	TargetID    string `json:"target_id"`
-	// 消息类型,0为群申请,1为私人申请
+	ID               int64  `json:"id"`
+	ApplicateAccount string `json:"applicate_account"`
+	TargetAccount    string `json:"target_account"`
+	// 消息类型:1为直接添加,2为请求添加,3为同意添加,4拒绝添加
 	AType int32 `json:"a_type"`
+	// 0:未同意,1:已同意
+	Status int32 `json:"status"`
+	// 0.用户, 1:群组
+	Object int32 `json:"object"`
 }
 
 type Friend struct {
-	ID        int64     `json:"id"`
-	FUserID   string    `json:"f_user_id"`
-	TUserID   string    `json:"t_user_id"`
-	CreatedAt time.Time `json:"created_at"`
+	ID           int64     `json:"id"`
+	FUserAccount string    `json:"f_user_account"`
+	TUserAccount string    `json:"t_user_account"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 type Group struct {
@@ -33,24 +36,25 @@ type Group struct {
 }
 
 type GroupMember struct {
-	ID        int64     `json:"id"`
-	Name      string    `json:"name"`
-	GroupID   string    `json:"group_id"`
-	UserID    string    `json:"user_id"`
-	CreatedAt time.Time `json:"created_at"`
+	ID int64 `json:"id"`
+	// 群内昵称应该是唯一的
+	Name         string    `json:"name"`
+	GroupAccount string    `json:"group_account"`
+	UserAccount  string    `json:"user_account"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 type Message struct {
-	ID         int64          `json:"id"`
-	Content    sql.NullString `json:"content"`
-	FromUserID string         `json:"from_user_id"`
-	ToUserID   sql.NullString `json:"to_user_id"`
-	GroupID    sql.NullString `json:"group_id"`
-	// 消息类型,0为群消息,1为私人消息
+	ID              int64  `json:"id"`
+	Content         string `json:"content"`
+	FromUserAccount string `json:"from_user_account"`
+	ToUserAccount   string `json:"to_user_account"`
+	GroupAccount    string `json:"group_account"`
+	// 消息类型:0系统消息,1为私人消息,2为群消息
 	MType int32 `json:"m_type"`
 	// 0为在线,1为离线
-	Networktatus int32     `json:"networktatus"`
-	CreatedAt    time.Time `json:"created_at"`
+	Networkstatus int32     `json:"networkstatus"`
+	CreatedAt     time.Time `json:"created_at"`
 }
 
 type User struct {

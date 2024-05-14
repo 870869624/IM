@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -14,6 +15,7 @@ func ConnectRdb() *redis.Client {
 	})
 
 	if _, err := rdb.Ping(context.Background()).Result(); err != nil {
+		fmt.Println(err)
 		panic(err)
 	}
 	return rdb

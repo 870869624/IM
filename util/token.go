@@ -21,7 +21,7 @@ func CreatToken(account string) (string, error) {
 	claims := UserAuthClaims{
 		account,
 		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			Issuer:    "test",
 		},
 	}
@@ -37,7 +37,7 @@ func CreatToken(account string) (string, error) {
 
 // 思路：传入tokenstring 获取claims里的account
 func ParaseToken(tokenString string) (*UserAuthClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &UserAuthClaims{}, func(t *jwt.Token) (interface{}, error) {//注意这里的结构体如果不用指针就会在传入tokenstring的时候报错
+	token, err := jwt.ParseWithClaims(tokenString, &UserAuthClaims{}, func(t *jwt.Token) (interface{}, error) { //注意这里的结构体如果不用指针就会在传入tokenstring的时候报错
 		return []byte(mySigningKey), nil
 	})
 	if err != nil {

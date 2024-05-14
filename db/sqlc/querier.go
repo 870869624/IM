@@ -6,15 +6,30 @@ package db
 
 import (
 	"context"
-	"database/sql"
 )
 
 type Querier interface {
+	CheckUser(ctx context.Context, arg CheckUserParams) (string, error)
+	CreateApply(ctx context.Context, arg CreateApplyParams) (Apply, error)
+	CreateFriend(ctx context.Context, arg CreateFriendParams) (Friend, error)
+	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
 	CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	GetMessageToGroup(ctx context.Context, groupID sql.NullString) ([]GetMessageToGroupRow, error)
-	GetMessageToUser(ctx context.Context, toUserID sql.NullString) ([]GetMessageToUserRow, error)
+	DeleteApply(ctx context.Context, arg DeleteApplyParams) error
+	GetApply(ctx context.Context, arg GetApplyParams) ([]Apply, error)
+	GetFriend(ctx context.Context, arg GetFriendParams) (Friend, error)
+	GetGMAccount(ctx context.Context, groupAccount string) ([]string, error)
+	GetGroup(ctx context.Context, account string) (Group, error)
+	GetMessageToGroup(ctx context.Context, groupAccount string) ([]GetMessageToGroupRow, error)
+	GetMessageToUser(ctx context.Context, toUserAccount string) ([]GetMessageToUserRow, error)
 	GetUser(ctx context.Context, account string) (User, error)
+	// 获取用户所在的群账号
+	GetUserGroup(ctx context.Context, userAccount string) ([]string, error)
+	JoinGroup(ctx context.Context, arg JoinGroupParams) (GroupMember, error)
+	ListFriend(ctx context.Context, arg ListFriendParams) ([]Friend, error)
+	ListGroupMember(ctx context.Context, arg ListGroupMemberParams) ([]GroupMember, error)
+	ListReceivedApply(ctx context.Context, arg ListReceivedApplyParams) ([]Apply, error)
+	ListSendApply(ctx context.Context, arg ListSendApplyParams) ([]Apply, error)
 	ListUser(ctx context.Context) ([]User, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
 }
