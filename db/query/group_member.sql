@@ -11,6 +11,7 @@ SELECT * FROM group_members
 where group_account = $1
 ORDER BY user_account LIMIT $2 OFFSET $3;
 
+-- 获取对应群号所有群成员
 -- name: GetGMAccount :many
 SELECT user_account FROM group_members
 where group_account = $1;

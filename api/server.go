@@ -24,6 +24,7 @@ func (server *Server) setunpRouter() {
 
 	router.POST("/signin", server.CreateUser)
 	router.POST("/login", server.loginUser)
+	router.GET("/ws", server.websocket)
 	userWithAuth := router.Group("/users")
 	userWithAuth.Use(middleware.ParaseToken())
 	{

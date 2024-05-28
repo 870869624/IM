@@ -29,3 +29,15 @@ services:
     command: ["redis-server"]
     ports:
       - 6379:6379
+
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    ports:
+      - "5672:5672"     # AMQP 协议端口
+      - "15672:15672"   # 管理界面端口
+    volumes:
+      - "./data:/var/lib/rabbitmq"  # 持久化RabbitMQ数据
+    environment:
+      RABBITMQ_DEFAULT_USER: "user"     # 设置默认用户名
+      RABBITMQ_DEFAULT_PASS: "password" # 设置默认密码
+    restart: always

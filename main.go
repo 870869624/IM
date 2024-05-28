@@ -45,4 +45,7 @@ func main() {
 	}
 	tcp.AcceptListen(listener, server1)
 
+	//websocket服务
+	// http.HandleFunc("/", websocket.ServerHome)
+
 }

@@ -7,6 +7,7 @@ import (
 	"net"
 	"time"
 	db "wechat/db/sqlc"
+	"wechat/mq"
 	"wechat/service"
 	"wechat/util"
 )
@@ -37,8 +38,8 @@ var OnlineMap = make(map[string]net.Conn)
 
 // 获取输入信息，对比tokenString然后获取数据库用户信息，存入onlineMapz中,在这里处理在线离线，在connect中处理连接用户
 func Process(conn net.Conn, server *Server) {
+	var message []string
 	defer conn.Close()
-
 	var messageReq MessageType
 	for {
 		data := make([]byte, 1024)
@@ -47,65 +48,84 @@ func Process(conn net.Conn, server *Server) {
 			fmt.Println(err, time.Now())
 			return
 		}
-		err = json.Unmarshal(data[:n], &messageReq)
 
-		// fmt.Printf("%+v", messageReq)   这里是用来检测收到消息格式有误问题的
+		// 存入消息队列----------
+		err = mq.PushMessage(data, "message")
 		if err != nil {
-			conn.Write([]byte(string(err.Error())))
-			conn.Close()
-			return
-		}
-
-		claims, err := util.ParaseToken(messageReq.Token) //如果token过期请求就会被中断
-		if err != nil {
-			conn.Write([]byte(string(err.Error())))
-			conn.Close()
-			return
-		}
-		if claims.Account != messageReq.From_account_account { //token错误也会被中断，获取到用户的信息
-			conn.Write([]byte("账户信息不正确"))
-			conn.Close()
-			return
-		}
-		user, err := server.store.GetUser(context.Background(), claims.Account) //获取到了用户信息和消息信息
-		if err != nil {
-			conn.Write([]byte(string(err.Error())))
-			conn.Close()
+			fmt.Println(err)
 			return
 		}
 
-		//检测是否有属于该用户的离线消息
-		outlineMessage, err := service.GetMessage(claims.Account)
-		if err == nil {
-			for _, v := range *outlineMessage {
-				_, err := conn.Write([]byte("  发送者:" + v.From_account_id + "  信息是:" + v.Content + "\n"))
-				if err != nil {
-					fmt.Println("离线消息获取失败")
+		msgs := mq.ConsumMessage("message")
+		m := <-*msgs
+		fmt.Println(msgs, "=====", m)
+		for {
+			fmt.Println(string(m.Body), "----------------")
+			message = append(message, string(m.Body))
+			fmt.Println(message, "+++++++++++++++")
+
+			//json格式解码
+			err = json.Unmarshal(data[:n], &message)
+
+			// fmt.Printf("%+v", messageReq)   这里是用来检测收到消息格式有误问题的
+			if err != nil {
+				conn.Write([]byte(string(err.Error())))
+				conn.Close()
+				return
+			}
+
+			claims, err := util.ParaseToken(messageReq.Token) //如果token过期请求就会被中断
+			if err != nil {
+				conn.Write([]byte(string(err.Error())))
+				conn.Close()
+				return
+			}
+			if claims.Account != messageReq.From_account_account { //token错误也会被中断，获取到用户的信息
+				conn.Write([]byte("账户信息不正确"))
+				conn.Close()
+				return
+			}
+			user, err := server.store.GetUser(context.Background(), claims.Account) //获取到了用户信息和消息信息
+			if err != nil {
+				conn.Write([]byte(string(err.Error())))
+				conn.Close()
+				return
+			}
+
+			//检测是否有属于该用户的离线消息
+			outlineMessage, err := service.GetMessage(claims.Account)
+			if err == nil {
+				for _, v := range *outlineMessage {
+					_, err := conn.Write([]byte("  发送者:" + v.From_account_id + "  信息是:" + v.Content + "\n"))
+					if err != nil {
+						fmt.Println("离线消息获取失败")
+					}
+				}
+			} else {
+				fmt.Println("没有离线私人消息")
+			}
+			m := CheckOutlineGroupMessage(server, claims.Account) //群组离线消息
+			if m != nil {
+				for _, v := range m {
+					_, err := conn.Write([]byte("  发送者:" + v.FromUserAccount + "  群组:" + v.GroupAccount + "  文本是:" + v.Content + "\n"))
+					if err != nil {
+						fmt.Println("离线消息获取失败")
+					}
 				}
 			}
-		} else {
-			fmt.Println("没有离线私人消息")
-		}
-		m := CheckOutlineGroupMessage(server, claims.Account) //群组离线消息
-		if m != nil {
-			for _, v := range m {
-				_, err := conn.Write([]byte("  发送者:" + v.FromUserAccount + "  群组:" + v.GroupAccount + "  文本是:" + v.Content + "\n"))
-				if err != nil {
-					fmt.Println("离线消息获取失败")
-				}
+
+			go heartBeat() //简单的心跳检测
+			//检查该登陆用户在线状态
+			if !CheckOnline(user, conn) {
+				OnlineMap[claims.Account] = conn //新增在线用户放入map中
 			}
+
+			fmt.Println("发送给:"+messageReq.To_account_account, "文本信息是:"+messageReq.Content, "----------")
+
+			//获取消息结构体中的发送目标
+			checkMessage(messageReq, OnlineMap, server)
 		}
 
-		go heartBeat() //简单的心跳检测
-		//检查该登陆用户在线状态
-		if !CheckOnline(user, conn) {
-			OnlineMap[claims.Account] = conn //新增在线用户放入map中
-		}
-
-		fmt.Println("发送给:"+messageReq.To_account_account, "文本信息是:"+messageReq.Content, "----------")
-
-		//获取消息结构体中的发送目标
-		checkMessage(messageReq, OnlineMap, server)
 	}
 }
 
@@ -199,15 +219,16 @@ func connectUser(messageReq MessageType, server *Server) {
 
 // 处理链接群组处理群消息
 func connectGroup(messageReq MessageType, server *Server) {
-	useraccounts, err := server.store.GetGMAccount(context.Background(), messageReq.Group_account)
+	useraccounts, err := server.store.GetGMAccount(context.Background(), messageReq.Group_account) //获取对应群组的所有成员
 	if err != nil {
 		fmt.Println(useraccounts, "2222", err)
 		return
 	}
-	if len(useraccounts) == 0 {
+	if len(useraccounts) == 0 { //没有该群组
 		fmt.Println("没有该群组")
 	}
 
+	//查看该用户是否在该群组中是否有发送信息的这个用户
 	findUser := db.CheckUserParams{
 		GroupAccount: messageReq.Group_account,
 		UserAccount:  messageReq.From_account_account,
